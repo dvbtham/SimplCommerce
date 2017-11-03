@@ -17,6 +17,7 @@ using SimplCommerce.Module.Core.Models;
 using SimplCommerce.Module.Localization;
 using SimplCommerce.WebHost.Extensions;
 using Microsoft.EntityFrameworkCore;
+using SimplCommerce.Module.Core.Data;
 
 namespace SimplCommerce.WebHost
 {
@@ -36,12 +37,7 @@ namespace SimplCommerce.WebHost
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true);
 
             builder.AddEnvironmentVariables();
-            var connectionStringConfig = builder.Build();
-
-            builder.AddEntityFrameworkConfig(options =>
-                    options.UseSqlServer(connectionStringConfig.GetConnectionString("DefaultConnection"))
-           );
-
+            
             Configuration = builder.Build();
 
             Log.Logger = new LoggerConfiguration()
@@ -56,6 +52,10 @@ namespace SimplCommerce.WebHost
             GlobalConfiguration.WebRootPath = _hostingEnvironment.WebRootPath;
             GlobalConfiguration.ContentRootPath = _hostingEnvironment.ContentRootPath;
             services.LoadInstalledModules(Modules, _hostingEnvironment);
+
+            services.AddDbContext<SimplDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), row => row.UseRowNumberForPaging())
+            );
 
             services.AddCustomizedDataStore(Configuration);
             services.AddCustomizedIdentity();
